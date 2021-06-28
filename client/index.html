@@ -1,0 +1,98 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic Tac Toe Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script src="socket.io.js"></script>
+  </head>
+  <body>
+    <div id="v-app">
+      <h1>{{title}}</h1>
+      <form>
+        <input v-model="text" type="text" />
+        <button type="submit" @click.prevent="sendMessage()">Send</button>
+      </form>
+      <div>
+        <div class="row">
+          [{{board[0]}}] &nbsp; [{{board[1]}}] &nbsp; [{{board[2]}}]
+        </div>
+        <div class="row">
+          [{{board[3]}}] &nbsp; [{{board[4]}}] &nbsp; [{{board[5]}}]
+        </div>
+        <div class="row">
+          [{{board[6]}}] &nbsp; [{{board[7]}}] &nbsp; [{{board[8]}}]
+        </div>
+      </div>
+      <p><strong>message:</strong> {{message}}</p>
+      <p><strong>error:</strong>{{error}}</p>
+      <p><strong>result:</strong>{{result}}</p>
+    </div>
+    <hr />
+    <div>
+      <h3>instructions:</h3>
+      <p>You can use numbers from 0 to 8 to make moves</p>
+      <p>Enjoy... =)</p>
+    </div>
+
+    <script>
+      const app = new Vue({
+        el: '#v-app',
+        data: {
+          id: '',
+          title: 'Tic Tac Toe Console',
+          text: '',
+          message: '',
+          board: [],
+          error: '',
+          result: '',
+        },
+        methods: {
+          sendMessage() {
+            console.log(`send: ${this.text}`);
+            this.socket.emit('make.move', this.text);
+            this.text = '';
+          },
+        },
+        created() {
+          this.socket = io('http://localhost:3000');
+          this.socket.on('welcome', (data) => {
+            console.log('welcome', data);
+            this.id = data;
+          });
+          this.socket.on('error_msg', (data) => {
+            console.log('error', data);
+            this.error = data;
+          });
+
+          this.socket.on('game.begin', (data) => {
+            console.log('game start', data);
+            if (data.player1.id === this.id) {
+              this.message = data.player1.message;
+            }
+            if (data.player2.id === this.id) {
+              this.message = data.player2.message;
+            }
+            this.board = data.board;
+            this.result = data.result;
+          });
+
+          this.socket.on('move.made', (data) => {
+            console.log('move made', data);
+            if (data.player1.id === this.id) {
+              this.message = data.player1.message;
+              this.error = data.player1.error;
+            }
+            if (data.player2.id === this.id) {
+              this.message = data.player2.message;
+              this.error = data.player2.error;
+            }
+            this.board = data.board;
+            this.result = data.result;
+          });
+        },
+      });
+    </script>
+  </body>
+</html>
